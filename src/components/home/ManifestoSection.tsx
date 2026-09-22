@@ -21,47 +21,32 @@ export function ManifestoSection() {
     const text = textRef.current;
     if (!section || !container || !text) return;
 
-    const letters = text.querySelectorAll(".letter");
     const totalDistance = () => text.scrollWidth - window.innerWidth;
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: container,
         start: "top top",
-        end: () => `+=${Math.max(window.innerHeight * 2, totalDistance() * 1.5)}`,
+        end: () => `+=${Math.max(window.innerHeight * 1.8, 1400)}`,
         pin: true,
-        scrub: 1,
+        scrub: 0.8,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
-          if (self.progress > 0.85) {
+          if (self.progress > 0.8) {
             document.body.dataset.interfaceColor = "dark";
+            section.classList.add("is-exiting");
           } else {
             document.body.dataset.interfaceColor = "cream";
+            section.classList.remove("is-exiting");
           }
         },
       },
     });
 
-    // Horizontal text translation
+    // Single performant horizontal translation
     tl.to(text, {
       x: () => -totalDistance(),
       ease: "none",
-    });
-
-    // Randomized elastic letter displacements
-    letters.forEach((letter) => {
-      gsap.from(letter, {
-        yPercent: (Math.random() - 0.5) * 120,
-        rotation: (Math.random() - 0.5) * 45,
-        ease: "elastic.out(1.2, 1)",
-        scrollTrigger: {
-          trigger: letter,
-          containerAnimation: tl,
-          start: "left 100%",
-          end: "left 20%",
-          scrub: 0.5,
-        },
-      });
     });
 
     return () => {
@@ -70,27 +55,13 @@ export function ManifestoSection() {
   }, [manifestoText]);
 
   return (
-    <section
-      ref={sectionRef}
-      className="manifesto relative w-full bg-cream overflow-hidden"
-      id="manifesto"
-    >
-      <div
-        ref={containerRef}
-        className="container w-full h-screen flex items-center overflow-hidden"
-      >
-        <p
-          ref={textRef}
-          className="text whitespace-nowrap text-dark font-cabinet text-[10vw] font-bold leading-none select-none pl-[50vw] pr-[50vw]"
-        >
-          {manifestoText.split("").map((char, index) => (
-            char === " " ? (
-              <span key={index} className="inline-block">&nbsp;</span>
-            ) : (
-              <span key={index} className="letter inline-block">
-                {char}
-              </span>
-            )
+    <section ref={sectionRef} className="manifesto" id="manifesto">
+      <div ref={containerRef} className="container">
+        <p ref={textRef} className="text">
+          {manifestoText.split(" ").map((word, wIdx) => (
+            <span key={wIdx} className="inline-block mr-[0.25em]">
+              {word}
+            </span>
           ))}
         </p>
       </div>

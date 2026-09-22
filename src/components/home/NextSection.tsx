@@ -10,49 +10,69 @@ gsap.registerPlugin(ScrollTrigger);
 
 export function NextSection() {
   const { t } = useI18n();
+  const sectionRef = useRef<HTMLElement>(null);
+  const pinHeightRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const orbRef = useRef<SVGCircleElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
+  const textPathRef = useRef<SVGTextPathElement>(null);
+  const introRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const pinHeight = pinHeightRef.current;
     const container = containerRef.current;
     const footer = footerRef.current;
     const orb = orbRef.current;
     const path = pathRef.current;
-    if (!container || !footer || !orb || !path) return;
+    const textPath = textPathRef.current;
+    const intro = introRef.current;
+
+    if (!pinHeight || !container || !footer || !orb || !path || !textPath) return;
 
     const pathLength = path.getTotalLength();
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: container,
+        trigger: pinHeight,
         start: "top top",
-        end: "+=3000",
-        pin: true,
+        end: "bottom bottom",
+        pin: container,
         scrub: 1,
+        onUpdate: (self) => {
+          if (self.progress > 0.1) {
+            document.body.dataset.interfaceColor = "dark";
+          }
+        },
       },
     });
 
-    // Animate orb along path
+    // 1. Intro fades slightly as scroll starts
+    if (intro) {
+      tl.to(intro, { opacity: 0.3, y: -30, duration: 0.5, ease: "power2.in" }, 0);
+    }
+
+    // 2. Animate orb & text along path
     tl.to(
       {},
       {
-        duration: 1,
+        duration: 2.5,
         onUpdate: function () {
           const p = this.progress();
           const point = path.getPointAtLength(p * pathLength);
           gsap.set(orb, { attr: { cx: point.x, cy: point.y }, autoAlpha: 1 });
+          textPath.setAttribute("startOffset", `${-p * 60}%`);
         },
-      }
+      },
+      0
     );
 
-    // Expand footer circular clip-path
+    // 3. Expand footer circular clip-path
     tl.fromTo(
       footer,
-      { clipPath: "circle(0% at 50% 50%)" },
-      { clipPath: "circle(100% at 50% 50%)", duration: 1, ease: "power2.inOut" },
-      "-=0.5"
+      { clipPath: "circle(0% at 50% 100%)" },
+      { clipPath: "circle(150% at 50% 100%)", duration: 1.2, ease: "power2.inOut" },
+      ">"
     );
 
     return () => {
@@ -61,101 +81,94 @@ export function NextSection() {
   }, []);
 
   return (
-    <section ref={containerRef} className="next-section relative w-full h-screen bg-dark text-cream overflow-hidden" id="contact">
-      {/* Intro */}
-      <div className="next-section__intro absolute top-24 left-1/2 -translate-x-1/2 text-center z-10">
-        <p className="font-cabinet text-4xl md:text-6xl font-bold tracking-tight">
-          {t("home.nextIntro")}
-        </p>
-        <Link
-          href="/playground/"
-          className="next-section__playground-link mt-4 inline-flex items-center gap-2 font-satoshi text-lg md:text-xl font-medium hover:opacity-80 transition-opacity"
-        >
-          <span>{t("home.playgroundLink")}</span>
-          <span aria-hidden="true">↗</span>
-        </Link>
-      </div>
-
-      {/* SVG Path with animated text and orb */}
-      <svg
-        className="next-section__svg absolute top-1/2 left-0 -translate-y-1/2 w-[250vw] h-auto pointer-events-none z-10"
-        fill="none"
-        viewBox="0 0 3898 891"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <linearGradient id="nextTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="80%" stopColor="#f6c177" />
-            <stop offset="85%" stopColor="#9b7cff" />
-            <stop offset="100%" stopColor="#ff6b4a" />
-          </linearGradient>
-        </defs>
-
-        <path
-          ref={pathRef}
-          id="nextPath"
-          d="M0.398438 611.016C175.398 377.517 857.398 -285.484 1461.4 139.638C1911.53 456.46 2114.4 805.516 2679.4 611.016C3088.4 470.219 3704.54 -33.3124 4354.9 781.516C4700.9 1215.02 5305.6 1466.52 6108.4 328.516"
-        />
-
-        <text className="font-cabinet text-[160px] md:text-[220px] font-medium tracking-tight">
-          <textPath href="#nextPath" textAnchor="start">
-            <tspan fill="#f5e7df">{t("home.nextTextCream")}</tspan>{" "}
-            <tspan fill="url(#nextTextGradient)">{t("home.nextTextGradient")}</tspan>
-          </textPath>
-        </text>
-
-        <circle ref={orbRef} id="nextOrb" cx="0" cy="0" r="16" fill="#ff6b4a" />
-      </svg>
-
-      {/* Footer Revealed via Circular Clip Path */}
-      <footer
-        ref={footerRef}
-        className="next-footer absolute inset-4 md:inset-8 rounded-[18px] overflow-hidden z-20 pointer-events-auto"
-        style={{ clipPath: "circle(0% at 50% 50%)" }}
-      >
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url(/shared/footer/background.webp)" }}
-        />
-        <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" />
-
-        <div className="relative z-10 w-full h-full p-8 md:p-16 flex flex-col justify-between text-cream">
-          <div className="max-w-4xl">
-            <p className="font-cabinet text-3xl sm:text-5xl md:text-7xl font-medium leading-tight">
-              <span>{t("home.footerLine1")}</span><br />
-              <span>{t("home.footerLine2")}</span><br />
-              <span className="opacity-75 text-2xl sm:text-4xl md:text-5xl">{t("home.footerLine3")}</span>
-            </p>
+    <section ref={sectionRef} className="next-section" id="contact">
+      <div ref={pinHeightRef} className="next-section__pin-height">
+        <div ref={containerRef} className="next-section__container">
+          {/* Intro */}
+          <div ref={introRef} className="next-section__intro">
+            <p>{t("home.nextIntro")}</p>
+            <Link href="/playground/" className="next-section__playground-link">
+              <span>{t("home.playgroundLink")}</span>
+              <span className="next-section__playground-arrow" aria-hidden="true">
+                ↗
+              </span>
+            </Link>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pt-8 border-t border-cream/20 font-satoshi">
-            <div className="flex flex-col sm:flex-row gap-6 text-sm md:text-base opacity-80">
-              <Link href="/mentions-legales/" className="hover:opacity-100 transition-opacity">
-                {t("home.legalNotice")}
-              </Link>
-              <span>© 2026 Guillaume Zhu</span>
-            </div>
+          {/* SVG Path with animated text and orb */}
+          <svg
+            className="next-section__svg"
+            viewBox="0 0 3898 891"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="nextTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="80%" stopColor="#f6c177" />
+                <stop offset="85%" stopColor="#9b7cff" />
+                <stop offset="100%" stopColor="#ff6b4a" />
+              </linearGradient>
+            </defs>
 
-            <div className="flex flex-wrap gap-8 md:gap-12 text-base md:text-lg">
-              <div className="flex flex-col gap-2">
-                <span className="font-cabinet text-xl font-bold opacity-60">{t("home.footerExplore")}</span>
-                <Link href="/#parcours" className="hover:underline">{t("home.footerJourney")}</Link>
-                <Link href="/#toolkit" className="hover:underline">Toolkit</Link>
-                <Link href="/#projects" className="hover:underline">{t("home.footerProjects")}</Link>
-                <Link href="/playground/" className="hover:underline">Playground</Link>
-                <Link href="/contact/" className="hover:underline">Contact</Link>
-              </div>
+            <path
+              ref={pathRef}
+              id="nextPath"
+              d="M0.398438 611.016C175.398 377.517 857.398 -285.484 1461.4 139.638C1911.53 456.46 2114.4 805.516 2679.4 611.016C3088.4 470.219 3704.54 -33.3124 4354.9 781.516C4700.9 1215.02 5305.6 1466.52 6108.4 328.516"
+            />
 
-              <div className="flex flex-col gap-2">
-                <span className="font-cabinet text-xl font-bold opacity-60">Contact</span>
-                <a href="https://www.linkedin.com/in/guillaume-zhu/" target="_blank" rel="noreferrer" className="hover:underline">LinkedIn</a>
-                <a href="https://github.com/guillaume-zhu" target="_blank" rel="noreferrer" className="hover:underline">GitHub</a>
-                <a href="mailto:contact@guillaumezhu.com" className="hover:underline">Email</a>
+            <text className="next-section__text">
+              <textPath ref={textPathRef} href="#nextPath" startOffset="0%">
+                <tspan fill="#f5e7df">{t("home.nextTextCream")} </tspan>
+                <tspan fill="url(#nextTextGradient)">{t("home.nextTextGradient")}</tspan>
+              </textPath>
+            </text>
+
+            <circle ref={orbRef} r="48" fill="#f5e7df" />
+          </svg>
+
+          {/* Next Footer revealed via circular clip-path */}
+          <footer ref={footerRef} className="next-footer">
+            <div className="next-footer__background" />
+            <div className="next-footer__content">
+              <div className="next-footer__inner">
+                <div className="next-footer__main">
+                  <p className="next-footer__headline">
+                    <span>{t("home.footerLine1")}</span>
+                    <br />
+                    <span>{t("home.footerLine2")}</span>
+                  </p>
+                  <div className="next-footer__meta">
+                    <span>{t("home.footerLine3")}</span>
+                    <span>·</span>
+                    <Link href="/mentions-legales/" className="hover:underline">
+                      {t("home.legalNotice")}
+                    </Link>
+                  </div>
+                </div>
+
+                <nav className="next-footer__nav" aria-label="Footer navigation">
+                  <div className="next-footer__group">
+                    <span className="next-footer__group-title">{t("home.footerExplore")}</span>
+                    <a href="#parcours">{t("home.footerJourney")}</a>
+                    <a href="#projects">{t("home.footerProjects")}</a>
+                    <Link href="/playground/">Playground</Link>
+                  </div>
+                  <div className="next-footer__group">
+                    <span className="next-footer__group-title">Contact</span>
+                    <a href="mailto:contact@guillaumezhu.com">Email ↗</a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+                      LinkedIn ↗
+                    </a>
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                      GitHub ↗
+                    </a>
+                  </div>
+                </nav>
               </div>
             </div>
-          </div>
+          </footer>
         </div>
-      </footer>
+      </div>
     </section>
   );
 }

@@ -8,7 +8,7 @@ import { NextSection } from "@/components/home/NextSection";
 
 export default function HomePage() {
   return (
-    <main className="relative w-full min-h-screen bg-cream">
+    <main className="relative w-full overflow-hidden">
       <HomeLoader />
       <HeroThree />
       <ManifestoSection />

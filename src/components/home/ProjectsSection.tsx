@@ -1,16 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import gsap from "gsap";
+import ScrollTrigger from "gsap/ScrollTrigger";
 import { useI18n } from "@/lib/i18n";
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface ProjectItem {
   id: string;
   slug: string;
   name: string;
   theme: "cream" | "dark";
-  previews: string[];
+  preview: string;
 }
 
 const PROJECTS: ProjectItem[] = [
@@ -19,113 +23,123 @@ const PROJECTS: ProjectItem[] = [
     slug: "memories-of-ghibli",
     name: "memories of ghibli",
     theme: "cream",
-    previews: [
-      "/projects/memories-of-ghibli/previews/ghibli-01-square.webp",
-      "/projects/memories-of-ghibli/previews/ghibli-02-square.webp",
-      "/projects/memories-of-ghibli/previews/ghibli-03-portrait.webp",
-    ],
+    preview: "/projects/memories-of-ghibli/previews/ghibli-01-square.webp",
   },
   {
     id: "mirage",
     slug: "mirage",
     name: "mirage",
     theme: "cream",
-    previews: [
-      "/projects/mirage/previews/mirage-01-square.webp",
-      "/projects/mirage/previews/mirage-02-square.webp",
-      "/projects/mirage/previews/mirage-03-portrait.webp",
-    ],
+    preview: "/projects/mirage/previews/mirage-01-square.webp",
   },
   {
     id: "pulse",
     slug: "pulse-festival",
     name: "pulse festival",
     theme: "dark",
-    previews: [
-      "/projects/pulse-festival/previews/pulse-01-portrait.webp",
-      "/projects/pulse-festival/previews/pulse-02-square.webp",
-      "/projects/pulse-festival/previews/pulse-03-portrait.webp",
-    ],
+    preview: "/projects/pulse-festival/previews/pulse-01-portrait.webp",
   },
   {
     id: "ornate",
     slug: "ornate",
     name: "ornate",
     theme: "cream",
-    previews: [
-      "/projects/ornate/previews/ornate-01-portrait.webp",
-      "/projects/ornate/previews/ornate-02-square.webp",
-      "/projects/ornate/previews/ornate-03-square.webp",
-    ],
+    preview: "/projects/ornate/previews/ornate-01-portrait.webp",
   },
   {
     id: "webflow",
     slug: "mae-webflow",
     name: "maë webflow",
     theme: "dark",
-    previews: [
-      "/projects/mae-webflow/previews/webflow-01-square.webp",
-      "/projects/mae-webflow/previews/webflow-02-square.webp",
-      "/projects/mae-webflow/previews/webflow-03-portrait.webp",
-    ],
+    preview: "/projects/mae-webflow/previews/webflow-01-square.webp",
   },
 ];
 
 export function ProjectsSection() {
   const { t } = useI18n();
-  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
-  const [previewIndex, setPreviewIndex] = useState(0);
+  const pinHeightRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null);
 
-  const handleMouseEnter = (projId: string) => {
-    setHoveredProject(projId);
-    setPreviewIndex((prev) => prev + 1);
-  };
+  useEffect(() => {
+    const pinHeight = pinHeightRef.current;
+    const container = containerRef.current;
+    if (!pinHeight || !container) return;
 
-  const handleMouseLeave = () => {
-    setHoveredProject(null);
-  };
+    const st = ScrollTrigger.create({
+      trigger: pinHeight,
+      start: "top top",
+      end: "bottom bottom",
+      pin: container,
+      scrub: 1,
+      onUpdate: (self) => {
+        if (self.progress > 0.1 && self.progress < 0.9) {
+          document.body.dataset.interfaceColor = "dark";
+        }
+      },
+    });
+
+    return () => {
+      st.kill();
+    };
+  }, []);
 
   return (
-    <section className="projects relative w-full min-h-screen bg-cream text-dark py-32 px-6 md:px-12 flex flex-col items-center justify-center overflow-hidden" id="projects">
-      <h2 className="projects__title font-cabinet text-5xl md:text-7xl font-bold tracking-tight mb-16 text-center">
-        {t("home.projectsTitle")}
-      </h2>
+    <section className="projects" id="projects">
+      <div ref={pinHeightRef} className="projects__pin-height">
+        <div ref={containerRef} className="projects__container">
+          <h2 className="projects__title">{t("home.projectsTitle")}</h2>
 
-      <nav className="projects__list flex flex-col items-center gap-8 md:gap-14 w-full z-10" aria-label="Projects">
-        {PROJECTS.map((project) => {
-          const isHovered = hoveredProject === project.id;
-          const activePreview = project.previews[previewIndex % project.previews.length];
+          <nav className="projects__list" aria-label="Projects">
+            {PROJECTS.map((project) => {
+              const isHovered = hoveredProjectId === project.id;
+              const words = project.name.split(" ");
 
-          return (
-            <div
-              key={project.id}
-              className="relative group"
-              onMouseEnter={() => handleMouseEnter(project.id)}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link
-                href={`/projects/${project.slug}/`}
-                className="projects__link font-satoshiItalic text-4xl sm:text-6xl md:text-8xl italic font-normal tracking-tight transition-transform duration-300 group-hover:scale-105 inline-block"
-              >
-                {project.name}
-              </Link>
+              return (
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.slug}/`}
+                  className="projects__link"
+                  onMouseEnter={() => setHoveredProjectId(project.id)}
+                  onMouseLeave={() => setHoveredProjectId(null)}
+                >
+                  <span className="flex items-center gap-4">
+                    {words.map((word, wIdx) => (
+                      <span key={wIdx} className="inline-flex">
+                        {word.split("").map((char, cIdx) => {
+                          const isMiddleLetter = wIdx === 0 && cIdx === Math.floor(word.length / 2);
 
-              {/* Floating Preview Card on Hover */}
-              {isHovered && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 w-44 md:w-64 aspect-[4/5] rounded-xl overflow-hidden shadow-2xl transition-all duration-300 animate-in fade-in zoom-in-95 rotate-3">
-                  <Image
-                    src={activePreview}
-                    alt={project.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
+                          return (
+                            <span key={cIdx} className="project-letter">
+                              <span className="project-letter__content">{char}</span>
+                              {isMiddleLetter && (
+                                <span
+                                  className={`project-letter__image ${
+                                    isHovered ? "is-active" : ""
+                                  }`}
+                                >
+                                  <Image
+                                    src={project.preview}
+                                    alt={project.name}
+                                    width={120}
+                                    height={120}
+                                    className="object-cover rounded-[1vw] shadow-xl"
+                                    unoptimized
+                                  />
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
+                      </span>
+                    ))}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
     </section>
   );
 }
