@@ -47,9 +47,9 @@ export function NextSection() {
       },
     });
 
-    // 1. Intro fades slightly as scroll starts
+    // 1. Intro fades out cleanly as scroll starts
     if (intro) {
-      tl.to(intro, { opacity: 0.3, y: -30, duration: 0.5, ease: "power2.in" }, 0);
+      tl.to(intro, { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }, 0);
     }
 
     // 2. Animate orb & text along path
@@ -70,8 +70,8 @@ export function NextSection() {
     // 3. Expand footer circular clip-path
     tl.fromTo(
       footer,
-      { clipPath: "circle(0% at 50% 100%)" },
-      { clipPath: "circle(150% at 50% 100%)", duration: 1.2, ease: "power2.inOut" },
+      { clipPath: "circle(0% at 50% 50%)" },
+      { clipPath: "circle(150% at 50% 50%)", duration: 1.2, ease: "power2.inOut" },
       ">"
     );
 
@@ -98,7 +98,7 @@ export function NextSection() {
           {/* SVG Path with animated text and orb */}
           <svg
             className="next-section__svg"
-            viewBox="0 0 3898 891"
+            viewBox="0 0 6200 1200"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >

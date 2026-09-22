@@ -57,40 +57,88 @@ const PROJECTS: ProjectItem[] = [
 
 export function ProjectsSection() {
   const { t } = useI18n();
-  const pinHeightRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLElement>(null);
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null);
 
   useEffect(() => {
-    const pinHeight = pinHeightRef.current;
+    const section = sectionRef.current;
     const container = containerRef.current;
-    if (!pinHeight || !container) return;
+    const list = listRef.current;
+    if (!section || !container || !list) return;
 
-    const st = ScrollTrigger.create({
-      trigger: pinHeight,
-      start: "top top",
-      end: "bottom bottom",
-      pin: container,
-      scrub: 1,
+    // Interface color toggle on section view
+    const colorSt = ScrollTrigger.create({
+      trigger: section,
+      start: "top 60%",
+      end: "bottom 40%",
+      onEnter: () => {
+        document.body.dataset.interfaceColor = "dark";
+      },
+      onEnterBack: () => {
+        document.body.dataset.interfaceColor = "dark";
+      },
+      onLeave: () => {
+        document.body.dataset.interfaceColor = "cream";
+      },
+      onLeaveBack: () => {
+        document.body.dataset.interfaceColor = "cream";
+      },
+    });
+
+    // Staggered entrance animation for project links
+    const links = list.querySelectorAll(".projects__link");
+    gsap.set(links, { opacity: 0, y: 35 });
+    const revealSt = ScrollTrigger.create({
+      trigger: container,
+      start: "top 75%",
+      onEnter: () => {
+        gsap.to(links, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          stagger: 0.12,
+          ease: "power3.out",
+        });
+      },
+    });
+
+    // Scroll velocity letter skew effect
+    let velocityTween: gsap.core.Tween | null = null;
+    const letters = list.querySelectorAll(".project-letter__content");
+    const velSt = ScrollTrigger.create({
+      trigger: container,
+      start: "top bottom",
+      end: "bottom top",
       onUpdate: (self) => {
-        if (self.progress > 0.1 && self.progress < 0.9) {
-          document.body.dataset.interfaceColor = "dark";
-        }
+        const vel = self.getVelocity() / 300;
+        const clampedVel = Math.max(-12, Math.min(12, vel));
+        if (velocityTween) velocityTween.kill();
+        velocityTween = gsap.to(letters, {
+          y: clampedVel,
+          duration: 0.25,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
       },
     });
 
     return () => {
-      st.kill();
+      colorSt.kill();
+      revealSt.kill();
+      velSt.kill();
+      if (velocityTween) velocityTween.kill();
     };
   }, []);
 
   return (
-    <section className="projects" id="projects">
-      <div ref={pinHeightRef} className="projects__pin-height">
+    <section ref={sectionRef} className="projects" id="projects">
+      <div className="projects__pin-height">
         <div ref={containerRef} className="projects__container">
           <h2 className="projects__title">{t("home.projectsTitle")}</h2>
 
-          <nav className="projects__list" aria-label="Projects">
+          <nav ref={listRef} className="projects__list" aria-label="Projects">
             {PROJECTS.map((project) => {
               const isHovered = hoveredProjectId === project.id;
               const words = project.name.split(" ");

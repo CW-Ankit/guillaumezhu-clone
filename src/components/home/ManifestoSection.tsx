@@ -27,12 +27,12 @@ export function ManifestoSection() {
       scrollTrigger: {
         trigger: container,
         start: "top top",
-        end: () => `+=${Math.max(window.innerHeight * 1.8, 1400)}`,
+        end: () => `+=${Math.max(window.innerHeight * 2.2, 2200)}`,
         pin: true,
         scrub: 0.8,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
-          if (self.progress > 0.8) {
+          if (self.progress > 0.85) {
             document.body.dataset.interfaceColor = "dark";
             section.classList.add("is-exiting");
           } else {

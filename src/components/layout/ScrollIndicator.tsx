@@ -28,9 +28,12 @@ export function ScrollIndicator() {
 
       for (let i = sectionElements.length - 1; i >= 0; i--) {
         const el = sectionElements[i];
-        if (el && el.offsetTop <= scrollPos) {
-          setActiveIndex(i);
-          break;
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY;
+          if (top <= scrollPos) {
+            setActiveIndex(i);
+            break;
+          }
         }
       }
     };

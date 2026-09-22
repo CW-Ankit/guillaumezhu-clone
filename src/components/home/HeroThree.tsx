@@ -162,19 +162,31 @@ export function HeroThree() {
     };
     window.addEventListener("resize", handleResize);
 
-    // ScrollTrigger Camera Orbit
+    // ScrollTrigger Camera Orbit & Choreography
     const st = ScrollTrigger.create({
       trigger: container,
       start: "top top",
-      end: "bottom top",
+      end: "+=1200",
+      pin: true,
       scrub: 0.8,
       onUpdate: (self) => {
         const progress = self.progress;
-        const angle = -progress * Math.PI * 0.4;
+        const angle = -progress * Math.PI * 0.45;
         camera.position.x = Math.sin(angle) * 5.5;
         camera.position.z = Math.cos(angle) * 5.5;
         camera.position.y = progress * 1.5;
         camera.lookAt(0, 0, 0);
+
+        if (frame) {
+          const frameScale = 1 - progress * 0.05;
+          frame.style.transform = `scale(${frameScale})`;
+        }
+
+        const identity = container.querySelector(".hero-content__identity") as HTMLElement | null;
+        if (identity) {
+          identity.style.opacity = `${Math.max(0, 1 - progress * 2.5)}`;
+          identity.style.transform = `translateY(${progress * 30}px)`;
+        }
       },
     });
 
